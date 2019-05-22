@@ -7,9 +7,10 @@
 tmp_acc="-f"
 tmp_la="-f"
 tmp_ra="-f"
+tmp_rmloops="-f"
 
 cleanup() {
-	rm -f "$tmp_acc" "$tmp_la" "$tmp_ra"
+	rm -f "$tmp_acc" "$tmp_la" "$tmp_ra" "$tmp_rmloops"
 }
 
 trap cleanup EXIT
@@ -17,9 +18,13 @@ trap cleanup EXIT
 tmp_acc="`mktemp`"
 tmp_la="`mktemp`"
 tmp_ra="`mktemp`"
+tmp_rmloops="`mktemp`"
 
 # see below
 force=false
+
+scriptdir="`dirname "$0"`"
+cmd_rmloops="$scriptdir/rmloops.py"
 
 # merge_two <FILE1> <FILE2>
 # merges two files and writes them to output
@@ -50,8 +55,10 @@ merge_list() {
 	do
 		echo "Adding '$file' to the merge..."
 		
-		merge_two "$tmp_acc" "$file" > "$tmp_la"
-		merge_two "$file" "$tmp_acc" > "$tmp_ra"
+		"$cmd_rmloops" < "$file" > "$tmp_rmloops"
+		
+		merge_two "$tmp_acc" "$tmp_rmloops" > "$tmp_la"
+		merge_two "$tmp_rmloops" "$tmp_acc" > "$tmp_ra"
 		
 		# we want primarily unambiguous merges.
 		# if the merge was ambiguous, skip it and try
